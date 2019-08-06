@@ -24,14 +24,11 @@ def polytope():  # of 20 faces
     c0 = [27, 30, 23, 29, 15]
     c1 = [1, 4, 16, 2, 8]
     c2 = [26, 18, 22, 20, 21, 5, 13, 9, 11, 10]
-    fs = []
-    for i in range(5):
-        fs.append([31, c0[i], c0[(i + 1) % 5]])
-        fs.append([0, c1[i], c1[(i + 1) % 5]])
-    for i in range(10):
-        fs.append([c2[i], c2[(i + 1) % 10], c2[(i + 2) % 10]])
-    return fs
-
+    a = np.concatenate([np.full(5, 31), np.full(5, 0), c2])
+    b = np.concatenate([c0, c1, np.roll(c2, 1)])
+    c = np.concatenate([np.roll(c0,1), np.roll(c1,1), np.roll(c2, 2)])
+    v= np.vstack((a,b,c))
+    return v.transpose()
 
 def normalize(v):
     norm = np.linalg.norm(v)
@@ -39,23 +36,21 @@ def normalize(v):
 
 
 def window(allpoints):
-    m_orth = np.array(basis[2:])
+    m_orth = basis[2:]
     pps= lattice().dot(m_orth.transpose())
     fs = polytope()
     face_ps = []
     face_ns = []    # each (face_ps[i], face_ns[i]) pair describes a face of the 3D polytope
     for f in fs:
-        p0 = pps[f[0]]
-        p1 = pps[f[1]]
-        p2 = pps[f[2]]
-        face_ps.append(p1)
-        nor = normalize(np.cross(p0 - p1, p2 - p1))
-        if np.dot(p1, nor) > 0:
+        ps = pps[f]  # fansy index
+        face_ps.append(ps[1])
+        nor = normalize(np.cross(ps[0] - ps[1], ps[2] - ps[1]))
+        if np.dot(ps[1], nor) > 0:
             nor = nor* -1
         face_ns.append(nor)
     inside = []
-    for p in allpoints:
-        pp = np.dot(m_orth, p)
+    for ps in allpoints:
+        pp = np.dot(m_orth, ps)
         flag = True
         for j in range(len(fs)):
             if np.dot(pp - face_ps[j], face_ns[j]) < 0:
@@ -64,8 +59,6 @@ def window(allpoints):
         inside.append(flag)
     return inside
 
-
-poly = polytope()  # this polytope will cut the entire 5D lattice
 ps = lattice(3)  #3 is very fast, 5 takes 10 seconds, lattice points (5D)
 nodesize = ps.shape[0]
 edges = []

@@ -3,8 +3,7 @@ import numpy as np
 
 # projection method: Chapter 3, Grimm & Schreiber, 2002, Fig3.9
 k = 0.5 * np.sqrt(2)
-mat = [[k, 0.5, 0, -0.5], [0, 0.5, k, 0.5], [k, -0.5, 0, 0.5], [0, 0.5, -k, 0.5]]
-
+mat = np.array([[k, 0.5, 0, -0.5], [0, 0.5, k, 0.5], [k, -0.5, 0, 0.5], [0, 0.5, -k, 0.5]])
 
 def lattice(en=2):  # 4D lattic
     s = (en - 1) / 2
@@ -19,12 +18,9 @@ def lattice(en=2):  # 4D lattic
 
 def polytope():
     ps = lattice()
-    m = np.array(mat[2:])
-    arr = []
-    for i in (9, 13, 5, 4, 6, 2, 10, 11):
-        v = m.dot(ps[i])
-        arr.append(v)
-    return np.array(arr)
+    m = mat[2:]
+    h = ps[[9, 13, 5, 4, 6, 2, 10, 11]]  # fansy indexing
+    return h.dot(m.transpose())
 
 
 def inside(p, vs):  # check if point p is inside polygon vs
@@ -48,8 +44,8 @@ for i in range(nodesize):
     for j in range(i + 1, nodesize):
         if np.linalg.norm(ps[i] - ps[j]) < 1.1:
             edges.append([ps[i], ps[j]])
-m = np.array(mat[2:])
-pro = np.array(mat[:2])
+m = mat[2:]
+pro = mat[:2]
 for pa, pb in edges:  # project all inside points & windowing the 4D lattice
     if inside(m.dot(pa), poly) and inside(m.dot(pb), poly):
         a = pro.dot(pa)
